@@ -1,0 +1,9 @@
+name: 'jira-clone-backend'
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - '3000:3000'
