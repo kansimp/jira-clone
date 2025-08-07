@@ -1,4 +1,4 @@
-name: 'jira-clone-backend'
+name: 'jira-clone'
 
 services:
   backend:
@@ -7,3 +7,25 @@ services:
       dockerfile: Dockerfile
     ports:
       - '3000:3000'
+    environment:
+      - NODE_ENV=development
+    depends_on:
+      - user_db
+
+  db:
+    image: postgres:15
+    name: db
+    environment:
+      POSTGRES_USER: jira
+      POSTGRES_PASSWORD: jira
+      POSTGRES_DB: jira
+    volumes:
+      - db_data:/var/lib/postgresql/data
+
+volumes:
+  db_data:
+    driver: local
+    driver_opts:
+      type: none
+      device: ./data
+      o: bind
