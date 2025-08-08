@@ -32,3 +32,9 @@ pnpm start:docker
 ```sh
 pnpm stop:docker
 ```
+
+# Api Docs (curent using Swagger)
+
+```sh
+at /api-docs
+```
