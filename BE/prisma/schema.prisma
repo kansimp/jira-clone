@@ -1,8 +1,5 @@
-// This is your Prisma schema file,
+// This is your improved Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
 generator client {
   provider = "prisma-client-js"
@@ -14,72 +11,284 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// Enums for better type safety and data integrity
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  IN_REVIEW
+  DONE
+  CANCELLED
+}
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum ProjectStatus {
+  PLANNING
+  ACTIVE
+  ON_HOLD
+  COMPLETED
+  ARCHIVED
+}
+
 model User {
-  id          String     @id @default(uuid())
-  email       String     @unique
+  id          String    @id @default(uuid())
+  email       String    @unique
   name        String?
+  displayName String?
   password    String?
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
+  isActive    Boolean   @default(true) // For soft deletion
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
   lastLogin   DateTime?
   lastLoginIp String?
-  userRoles   UserRole[]
+
+  // Relations
+  userRoles       UserRole[]
+  userProjects    ProjectUser[]
+  information     UserInfo?
+  authoredTasks   Task[]           @relation("TaskAuthor")
+  assignedTasks   Task[]           @relation("TaskAssignee")
+  taskComments    TaskComment[]
+  notifications   Notification[]
+  taskAttachments TaskAttachment[]
 
   @@index([email], name: "idx_users_email")
-  @@index([id], name: "idx_users_id")
+  @@index([isActive], name: "idx_users_active")
+  @@index([createdAt], name: "idx_users_created_at")
   @@map("users")
 }
 
+model UserInfo {
+  userId      String  @unique
+  bio         String?
+  avatar      String?
+  location    String?
+  phone       String?
+  timezone    String?
+  preferences Json? // Store user preferences as JSON
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_info")
+}
+
 model Role {
-  id              String           @id @default(uuid())
-  name            String           @unique
-  description     String?
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
-  rolePermissions RolePermission[]
-  userRoles       UserRole[]
+  id          String   @id @default(uuid())
+  name        String   @unique
+  description String?
+  isSystem    Boolean  @default(false) // Mark system roles that shouldn't be deleted
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  rolePermissions   RolePermission[]
+  userRoles         UserRole[]
+  roleUserInProject ProjectUser[]
 
   @@index([name], name: "idx_roles_name")
-  @@index([id], name: "idx_roles_id")
+  @@index([isActive], name: "idx_roles_active")
   @@map("roles")
 }
 
 model Permission {
-  id              String           @id @default(uuid())
-  action          String
-  resource        String
-  description     String?
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
+  id          String   @id @default(uuid())
+  action      String // e.g., 'create', 'read', 'update', 'delete'
+  resource    String // e.g., 'task', 'project', 'user'
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
   rolePermissions RolePermission[]
 
   @@unique([action, resource], name: "unique_permission_action_resource")
-  @@index([id], name: "idx_permissions_id")
+  @@index([action], name: "idx_permissions_action")
+  @@index([resource], name: "idx_permissions_resource")
   @@map("permissions")
 }
 
 model RolePermission {
   roleId       String
   permissionId String
-  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  role       Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
 
   @@id([roleId, permissionId])
-  @@index([roleId, permissionId], name: "idx_role_permissions")
-  @@map("roles_permissions")
+  @@map("role_permissions")
 }
 
 model UserRole {
   userId    String
   roleId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  role      Role     @relation(fields: [roleId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
   @@id([userId, roleId])
-  @@index([userId, roleId], name: "idx_user_roles")
-  @@map("users_roles")
+  @@map("user_roles")
+}
+
+model Project {
+  id          String        @id @default(uuid())
+  name        String
+  slug        String        @unique
+  description String?
+  status      ProjectStatus @default(PLANNING)
+  startDate   DateTime?
+  endDate     DateTime?
+  isArchived  Boolean       @default(false)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  members ProjectUser[]
+  tasks   Task[]
+
+  @@index([name], name: "idx_projects_name")
+  @@index([status], name: "idx_projects_status")
+  @@index([isArchived], name: "idx_projects_archived")
+  @@index([createdAt], name: "idx_projects_created_at")
+  @@map("projects")
+}
+
+model ProjectUser {
+  projectId       String
+  userId          String
+  roleInProjectId String
+  joinedAt        DateTime @default(now()) // More descriptive than createdAt
+  updatedAt       DateTime @updatedAt
+
+  project       Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user          User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  roleInProject Role    @relation(fields: [roleInProjectId], references: [id])
+
+  @@id([projectId, userId])
+  @@map("project_users")
+}
+
+model Task {
+  id             String       @id @default(uuid())
+  title          String
+  description    String?
+  status         TaskStatus   @default(TODO)
+  priority       TaskPriority @default(MEDIUM)
+  estimatedHours Int?
+  actualHours    Int?
+  dueDate        DateTime?
+  completedAt    DateTime?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  projectId      String
+  authorId       String
+  assigneeId     String? // Moved from TaskInfo for better querying
+
+  // Relations
+  author   User    @relation("TaskAuthor", fields: [authorId], references: [id])
+  assignee User?   @relation("TaskAssignee", fields: [assigneeId], references: [id])
+  project  Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  comments     TaskComment[]
+  attachments  TaskAttachment[]
+  dependencies TaskDependency[] @relation("DependentTask")
+  dependsOn    TaskDependency[] @relation("RequiredTask")
+
+  @@index([projectId], name: "idx_tasks_project")
+  @@index([authorId], name: "idx_tasks_author")
+  @@index([assigneeId], name: "idx_tasks_assignee")
+  @@index([status], name: "idx_tasks_status")
+  @@index([priority], name: "idx_tasks_priority")
+  @@index([dueDate], name: "idx_tasks_due_date")
+  @@index([createdAt], name: "idx_tasks_created_at")
+  @@map("tasks")
+}
+
+// New models for enhanced functionality
+
+model TaskComment {
+  id        String   @id @default(uuid())
+  content   String
+  taskId    String
+  authorId  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  task   Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  author User @relation(fields: [authorId], references: [id])
+
+  @@index([taskId], name: "idx_task_comments_task")
+  @@index([createdAt], name: "idx_task_comments_created_at")
+  @@map("task_comments")
+}
+
+model TaskAttachment {
+  id           String   @id @default(uuid())
+  filename     String
+  originalName String
+  mimeType     String
+  size         Int
+  url          String
+  taskId       String
+  uploadedBy   String
+  createdAt    DateTime @default(now())
+
+  task     Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  uploader User @relation(fields: [uploadedBy], references: [id], onDelete: Cascade)
+
+  @@index([taskId], name: "idx_task_attachments_task")
+  @@map("task_attachments")
+}
+
+model TaskDependency {
+  dependentTaskId String // Task that depends on another
+  requiredTaskId  String // Task that must be completed first
+  createdAt       DateTime @default(now())
+
+  dependentTask Task @relation("DependentTask", fields: [dependentTaskId], references: [id], onDelete: Cascade)
+  requiredTask  Task @relation("RequiredTask", fields: [requiredTaskId], references: [id], onDelete: Cascade)
+
+  @@id([dependentTaskId, requiredTaskId])
+  @@map("task_dependencies")
+}
+
+model Notification {
+  id         String   @id @default(uuid())
+  title      String
+  message    String
+  type       String // e.g., 'task_assigned', 'project_invite', 'deadline_reminder'
+  isRead     Boolean  @default(false)
+  userId     String
+  entityId   String? // Reference to related entity (task, project, etc.)
+  entityType String? // Type of related entity
+  createdAt  DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isRead], name: "idx_notifications_user_read")
+  @@index([createdAt], name: "idx_notifications_created_at")
+  @@map("notifications")
+}
+
+// Audit log for tracking changes
+model AuditLog {
+  id         String   @id @default(uuid())
+  userId     String? // User who made the change (null for system changes)
+  action     String // 'CREATE', 'UPDATE', 'DELETE'
+  entityType String // 'User', 'Task', 'Project', etc.
+  entityId   String // ID of the affected entity
+  oldValues  Json? // Previous values (for updates)
+  newValues  Json? // New values (for creates/updates)
+  createdAt  DateTime @default(now())
+
+  @@index([entityType, entityId], name: "idx_audit_log_entity")
+  @@index([userId], name: "idx_audit_log_user")
+  @@index([createdAt], name: "idx_audit_log_created_at")
+  @@map("audit_logs")
 }
