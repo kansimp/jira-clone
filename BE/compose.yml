@@ -6,15 +6,16 @@ services:
       context: .
       dockerfile: Dockerfile
     ports:
-      - '3000:3000'
+      - ${PORT}:${PORT}
+    env_file:
+      - .env
     environment:
-      - NODE_ENV=development
+      - DATABASE_URL=postgresql://jira:jira@db:5432/jira
     depends_on:
-      - user_db
+      - db
 
   db:
     image: postgres:15
-    name: db
     environment:
       POSTGRES_USER: jira
       POSTGRES_PASSWORD: jira
@@ -27,5 +28,5 @@ volumes:
     driver: local
     driver_opts:
       type: none
-      device: ./data
+      device: .docker/data
       o: bind

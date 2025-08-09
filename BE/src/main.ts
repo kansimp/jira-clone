@@ -12,13 +12,19 @@ async function bootstrap() {
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api-docs', app, document);
+  SwaggerModule.setup('swagger', app, document);
+
+  const appPort = process.env.PORT ?? 3000;
+
+  const corsOrigins =
+    process.env.CORS_ORIGINS?.split(',').map((origin) => origin.trim()) ||
+    `http://localhost:${appPort}`;
 
   app.enableCors({
-    origin: '*',
+    origin: corsOrigins,
   });
 
-  await app.listen(process.env.PORT ?? 3000);
+  await app.listen(appPort);
 }
 bootstrap().catch((err) => {
   console.error('Error during bootstrap:', err);
