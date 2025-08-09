@@ -5,4 +5,5 @@ export class CreateTaskDto extends OmitType(TaskEntity, [
   'id',
   'createdAt',
   'updatedAt',
+  'authorId',
 ]) {}

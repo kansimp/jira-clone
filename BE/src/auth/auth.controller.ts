@@ -1,17 +1,22 @@
 import {
   Body,
   Controller,
+  Get,
   HttpCode,
   HttpException,
   HttpStatus,
   Ip,
   Post,
+  Request,
+  UseGuards,
 } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { GetUserDto } from './dto/get-user.dto';
 import { LoginReqDto } from './dto/login-req.dto';
 import { LoginResDto } from './dto/login-res.dto';
 import { JwtService } from '@nestjs/jwt';
+import { AuthGuard } from './auth.guard';
+import { ApiBearerAuth } from '@nestjs/swagger';
 
 @Controller('auth')
 export class AuthController {
@@ -111,6 +116,26 @@ export class AuthController {
 
     return {
       user: newUser,
+    };
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard)
+  @Get('profile')
+  async getProfile(@Request() req: Request & { currentUserId: string }) {
+    return {
+      user: await this.prisma.user.findUnique({
+        where: {
+          id: req.currentUserId,
+        },
+        include: {
+          information: {
+            omit: {
+              userId: true,
+            },
+          },
+        },
+      }),
     };
   }
 }

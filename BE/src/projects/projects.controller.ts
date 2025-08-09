@@ -49,7 +49,18 @@ export class ProjectsController {
   @Get()
   @HttpCode(HttpStatus.OK)
   findAll() {
-    return this.prisma.project.findMany();
+    return this.prisma.project.findMany({
+      include: {
+        members: true,
+        tasks: {
+          select: {
+            id: true,
+            priority: true,
+            title: true,
+          },
+        },
+      },
+    });
   }
 
   @Get(':id')
