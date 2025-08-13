@@ -37,14 +37,12 @@ async function bootstrap() {
     origin: corsOrigins,
   });
 
-  await app.listen(appPort);
-}
-bootstrap()
-  .then(() => {
+  await app.listen(appPort, () => {
     new Logger('Bootstrap').log(
-      `Application is running on: http://localhost:${process.env.PORT ?? 3000}`,
+      `Application is running on: http://localhost:${appPort}`,
     );
-  })
-  .catch((error) => {
-    new Logger('Bootstrap').error('Error during application bootstrap', error);
   });
+}
+bootstrap().catch((error) => {
+  new Logger('Bootstrap').error('Error during application bootstrap', error);
+});

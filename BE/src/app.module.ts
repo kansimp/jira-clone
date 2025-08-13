@@ -11,8 +11,8 @@ import { LoggerMiddleware } from './common/middlewares/logger.middleware';
   imports: [
     ConfigModule.forRoot(),
     PrismaModule,
-    UsersModule,
     AuthModule,
+    UsersModule,
     ProjectsModule,
     TasksModule,
   ],

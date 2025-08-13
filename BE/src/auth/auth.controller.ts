@@ -6,6 +6,7 @@ import {
   HttpCode,
   HttpStatus,
   Post,
+  Req,
   UseGuards,
 } from '@nestjs/common';
 import { JwtAccessGuard } from './guards/jwt-access.guard';
@@ -13,6 +14,8 @@ import { ApiBearerAuth } from '@nestjs/swagger';
 import { RegisterReqDto } from './dto/register-req.dto';
 import { AuthService } from './auth.service';
 import { LoginCredential } from './dto/login-req.dto';
+import { IJwtPayload } from './dto/login-res.dto';
+import { Request } from 'express';
 
 @Controller('auth')
 export class AuthController {
@@ -26,6 +29,10 @@ export class AuthController {
     }
 
     const result = await this.authService.login(loginCredential);
+
+    if (!result) {
+      throw new BadRequestException('Invalid email or password.');
+    }
 
     return {
       ...result,
@@ -46,5 +53,7 @@ export class AuthController {
   @ApiBearerAuth()
   @UseGuards(JwtAccessGuard)
   @Get('profile')
-  async getProfile() {}
+  getProfile(@Req() req: Request & { user: IJwtPayload }) {
+    return req.user;
+  }
 }

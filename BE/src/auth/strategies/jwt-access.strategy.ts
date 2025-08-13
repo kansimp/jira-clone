@@ -12,11 +12,14 @@ export class JwtAccessStrategy extends PassportStrategy(
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
-      secretOrKey: process.env.JWT_ACCESS_SECRET || '',
+      secretOrKey: process.env.JWT_ACCESS_SECRET ?? 'jwt_access_random_string',
     });
   }
 
   validate(payload: IJwtPayload): IJwtPayload {
-    return payload;
+    return {
+      userId: payload.userId,
+      email: payload.email,
+    };
   }
 }
