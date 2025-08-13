@@ -29,7 +29,22 @@ export default tseslint.config(
     rules: {
       '@typescript-eslint/no-explicit-any': 'off',
       '@typescript-eslint/no-floating-promises': 'warn',
-      '@typescript-eslint/no-unsafe-argument': 'warn'
+      '@typescript-eslint/no-unsafe-argument': 'warn',
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        {
+          argsIgnorePattern: '^_', // Ignore unused function arguments prefixed with '_'
+          varsIgnorePattern: '^_', // Ignore unused variables prefixed with '_'
+          caughtErrorsIgnorePattern: '^_', // Ignore unused catch clause parameters prefixed with '_'
+          // ignoreRestSiblings: true, // Ignore unused properties when using object destructuring
+        },
+      ],
+      'prettier/prettier': [
+        'error',
+        {
+          endOfLine: 'auto',
+        },
+      ],
     },
   },
 );
