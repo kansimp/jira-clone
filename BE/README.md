@@ -11,7 +11,18 @@ pnpm >= v10.7.0
 
 ### first apply migration to generate db
 ```sh
-pnpm apply:migration
+pnpm prisma:deploy
+```
+
+### View collection table (like mongo compass)
+```sh
+pnpm prisma:studio
+```
+
+### if not have prisma client (use this command to generate)
+
+```sh
+pnpm prisma:generate
 ```
 
 ### Start dev
@@ -30,13 +41,13 @@ docker >= v27.4.0
 ## CMD to run
 
 ```sh
-pnpm start:docker
+pnpm docker:start
 ```
 
 ## CMD to stop
 
 ```sh
-pnpm stop:docker
+pnpm docker:stop
 ```
 
 # Api Docs (curent using Swagger)

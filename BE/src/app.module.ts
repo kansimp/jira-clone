@@ -13,8 +13,8 @@ import { PermissionsModule } from './permissions/permissions.module';
   imports: [
     ConfigModule.forRoot(),
     PrismaModule,
-    UsersModule,
     AuthModule,
+    UsersModule,
     ProjectsModule,
     TasksModule,
     RolesModule,

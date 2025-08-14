@@ -12,7 +12,7 @@ import {
 import { TasksService } from './tasks.service';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
-import { AuthGuard } from 'src/auth/auth.guard';
+import { JwtAccessGuard } from 'src/auth/guards/jwt-access.guard';
 import { ApiBearerAuth } from '@nestjs/swagger';
 
 @Controller('tasks')
@@ -20,7 +20,7 @@ export class TasksController {
   constructor(private readonly tasksService: TasksService) {}
 
   @ApiBearerAuth()
-  @UseGuards(AuthGuard)
+  @UseGuards(JwtAccessGuard)
   @Post()
   create(
     @Body() createTaskDto: CreateTaskDto,
