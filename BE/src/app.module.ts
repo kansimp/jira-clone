@@ -6,6 +6,8 @@ import { ConfigModule } from '@nestjs/config';
 import { ProjectsModule } from './projects/projects.module';
 import { TasksModule } from './tasks/tasks.module';
 import { LoggerMiddleware } from './common/middlewares/logger.middleware';
+import { RolesModule } from './roles/roles.module';
+import { PermissionsModule } from './permissions/permissions.module';
 
 @Module({
   imports: [
@@ -15,6 +17,8 @@ import { LoggerMiddleware } from './common/middlewares/logger.middleware';
     AuthModule,
     ProjectsModule,
     TasksModule,
+    RolesModule,
+    PermissionsModule,
   ],
 })
 export class AppModule implements NestModule {
