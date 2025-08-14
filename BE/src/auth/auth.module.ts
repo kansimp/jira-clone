@@ -1,15 +1,31 @@
-import { Module } from '@nestjs/common';
+import { Module, OnModuleInit } from '@nestjs/common';
 import { AuthController } from './auth.controller';
 import { JwtModule } from '@nestjs/jwt';
 import { UsersModule } from 'src/users/users.module';
 import { AuthService } from './auth.service';
 import { JwtAccessStrategy } from './strategies/jwt-access.strategy';
 import { PassportModule } from '@nestjs/passport';
+import { RolesModule } from 'src/roles/roles.module';
+import { PermissionsModule } from 'src/permissions/permissions.module';
+import { PrismaModule } from 'src/prisma/prisma.module';
 
 @Module({
   controllers: [AuthController],
-  imports: [PassportModule, JwtModule, UsersModule],
+  imports: [
+    PassportModule,
+    JwtModule,
+    UsersModule,
+    RolesModule,
+    PermissionsModule,
+    PrismaModule,
+  ],
   providers: [AuthService, JwtAccessStrategy],
   exports: [AuthService],
 })
-export class AuthModule {}
+export class AuthModule implements OnModuleInit {
+  constructor(private readonly authService: AuthService) {}
+
+  async onModuleInit() {
+    await this.authService.initAuth();
+  }
+}

@@ -6,11 +6,36 @@ import { PasswordUtils } from 'src/common/utils/password-hasher.util';
 
 @Injectable()
 export class UsersService {
+  updateLastLogin(id: string, ip?: string) {
+    return this.prisma.user.update({
+      where: {
+        id,
+      },
+      data: {
+        lastLogin: new Date(),
+        lastLoginIp: ip || null,
+      },
+      include: {
+        information: {
+          omit: {
+            userId: true,
+          },
+        },
+      },
+    });
+  }
   constructor(private readonly prisma: PrismaService) {}
 
   findByEmail(email: string) {
     return this.prisma.user.findUnique({
       where: { email },
+      include: {
+        information: {
+          omit: {
+            userId: true,
+          },
+        },
+      },
     });
   }
 
@@ -32,6 +57,13 @@ export class UsersService {
         information: {
           create: {
             ...userInfor,
+          },
+        },
+      },
+      include: {
+        information: {
+          omit: {
+            userId: true,
           },
         },
       },

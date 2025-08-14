@@ -1,18 +1,14 @@
 import { ApiProperty, OmitType } from '@nestjs/swagger';
 import { UserEntity } from '../entities/user.entity';
-import { IUserInfo } from '../interfaces/user-info.interface';
 
-export class CreateUserDto
-  extends OmitType(UserEntity, [
-    'id',
-    'createdAt',
-    'updatedAt',
-    'lastLogin',
-    'lastLoginIp',
-    'isActive',
-  ] as const)
-  implements IUserInfo
-{
+export class CreateUserDto extends OmitType(UserEntity, [
+  'id',
+  'createdAt',
+  'updatedAt',
+  'lastLogin',
+  'lastLoginIp',
+  'isActive',
+] as const) {
   @ApiProperty({
     nullable: true,
     example: {
@@ -23,7 +19,7 @@ export class CreateUserDto
       timezone: 'America/Los_Angeles',
     },
   })
-  information?: {
+  information: {
     bio: string | null;
     avatar: string | null;
     location: string | null;

@@ -1,5 +1,5 @@
 export interface IUserInfo {
-  information?: {
+  information: {
     bio: string | null;
     avatar: string | null;
     location: string | null;

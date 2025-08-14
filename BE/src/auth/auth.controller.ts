@@ -5,6 +5,7 @@ import {
   Get,
   HttpCode,
   HttpStatus,
+  Ip,
   Post,
   Req,
   UseGuards,
@@ -23,19 +24,19 @@ export class AuthController {
 
   @Post('login')
   @HttpCode(HttpStatus.OK)
-  async login(@Body() loginCredential: LoginCredential) {
+  async login(@Body() loginCredential: LoginCredential, @Ip() ip: string) {
     if (!loginCredential.email || !loginCredential.password) {
       throw new BadRequestException('Email and password are required.');
     }
 
-    const result = await this.authService.login(loginCredential);
+    const loginDto = await this.authService.login(loginCredential, ip);
 
-    if (!result) {
+    if (!loginDto) {
       throw new BadRequestException('Invalid email or password.');
     }
 
     return {
-      ...result,
+      ...loginDto,
     };
   }
 

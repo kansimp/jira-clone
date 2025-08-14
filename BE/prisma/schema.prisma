@@ -80,7 +80,7 @@ model Role {
   id          String   @id @default(uuid())
   name        String   @unique
   description String?
-  isSystem    Boolean  @default(false) // Mark system roles that shouldn't be deleted
+  isSystem    Boolean  @default(false)
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -96,8 +96,8 @@ model Role {
 
 model Permission {
   id          String   @id @default(uuid())
-  action      String // e.g., 'create', 'read', 'update', 'delete'
-  resource    String // e.g., 'task', 'project', 'user'
+  action      String
+  resource    String
   description String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
