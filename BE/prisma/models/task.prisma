@@ -1,0 +1,97 @@
+// Enums for better type safety and data integrity
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  IN_REVIEW
+  DONE
+  CANCELLED
+}
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+model Task {
+  id             String       @id @default(uuid())
+  title          String
+  description    String?
+  status         TaskStatus   @default(TODO)
+  priority       TaskPriority @default(MEDIUM)
+  estimatedHours Int?
+  actualHours    Int?
+  dueDate        DateTime?
+  completedAt    DateTime?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  projectId      String
+  authorId       String
+  assigneeId     String? // Moved from TaskInfo for better querying
+
+  // Relations
+  author   User    @relation("TaskAuthor", fields: [authorId], references: [id])
+  assignee User?   @relation("TaskAssignee", fields: [assigneeId], references: [id])
+  project  Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  comments     TaskComment[]
+  attachments  TaskAttachment[]
+  dependencies TaskDependency[] @relation("DependentTask")
+  dependsOn    TaskDependency[] @relation("RequiredTask")
+
+  @@index([projectId], name: "idx_tasks_project")
+  @@index([authorId], name: "idx_tasks_author")
+  @@index([assigneeId], name: "idx_tasks_assignee")
+  @@index([status], name: "idx_tasks_status")
+  @@index([priority], name: "idx_tasks_priority")
+  @@index([dueDate], name: "idx_tasks_due_date")
+  @@index([createdAt], name: "idx_tasks_created_at")
+  @@map("tasks")
+}
+
+model TaskAttachment {
+  id           String   @id @default(uuid())
+  filename     String
+  originalName String
+  mimeType     String
+  size         Int
+  url          String
+  taskId       String
+  uploadedBy   String
+  createdAt    DateTime @default(now())
+
+  task     Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  uploader User @relation(fields: [uploadedBy], references: [id], onDelete: Cascade)
+
+  @@index([taskId], name: "idx_task_attachments_task")
+  @@map("task_attachments")
+}
+
+model TaskDependency {
+  dependentTaskId String // Task that depends on another
+  requiredTaskId  String // Task that must be completed first
+  createdAt       DateTime @default(now())
+
+  dependentTask Task @relation("DependentTask", fields: [dependentTaskId], references: [id], onDelete: Cascade)
+  requiredTask  Task @relation("RequiredTask", fields: [requiredTaskId], references: [id], onDelete: Cascade)
+
+  @@id([dependentTaskId, requiredTaskId])
+  @@map("task_dependencies")
+}
+
+model TaskComment {
+  id        String   @id @default(uuid())
+  content   String
+  taskId    String
+  authorId  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  task   Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  author User @relation(fields: [authorId], references: [id])
+
+  @@index([taskId], name: "idx_task_comments_task")
+  @@index([createdAt], name: "idx_task_comments_created_at")
+  @@map("task_comments")
+}

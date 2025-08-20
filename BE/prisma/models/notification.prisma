@@ -1,0 +1,17 @@
+model Notification {
+  id         String   @id @default(uuid())
+  title      String
+  message    String
+  type       String // e.g., 'task_assigned', 'project_invite', 'deadline_reminder'
+  isRead     Boolean  @default(false)
+  userId     String
+  entityId   String? // Reference to related entity (task, project, etc.)
+  entityType String? // Type of related entity
+  createdAt  DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isRead], name: "idx_notifications_user_read")
+  @@index([createdAt], name: "idx_notifications_created_at")
+  @@map("notifications")
+}

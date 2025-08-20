@@ -1,0 +1,15 @@
+.docker/
+node_modules/
+dist/
+.env
+.env.*
+coverage/
+*.log
+prisma/dev.db
+prisma/dev.db-journal
+.idea/
+.vscode/
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+test/

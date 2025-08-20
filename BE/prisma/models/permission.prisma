@@ -1,0 +1,16 @@
+model Permission {
+  id          String   @id @default(uuid())
+  action      String
+  resource    String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  rolePermissions RolePermission[]
+  userPermissions UserPermission[]
+
+  @@unique([action, resource], name: "unique_permission_action_resource")
+  @@index([action], name: "idx_permissions_action")
+  @@index([resource], name: "idx_permissions_resource")
+  @@map("permissions")
+}
