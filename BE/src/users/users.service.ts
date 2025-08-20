@@ -6,6 +6,18 @@ import { PasswordUtils } from 'src/common/utils/password-hasher.util';
 
 @Injectable()
 export class UsersService {
+  getUserWithRoles(id: string) {
+    return this.prisma.user.findUnique({
+      where: { id },
+      include: {
+        userRoles: {
+          include: {
+            role: true,
+          },
+        },
+      },
+    });
+  }
   updateLastLogin(id: string, ip?: string) {
     return this.prisma.user.update({
       where: {
@@ -33,6 +45,32 @@ export class UsersService {
         information: {
           omit: {
             userId: true,
+          },
+        },
+      },
+    });
+  }
+
+  getUserWithPermissions(id: string) {
+    return this.prisma.user.findUnique({
+      where: { id },
+      include: {
+        userRoles: {
+          include: {
+            role: {
+              include: {
+                rolePermissions: {
+                  include: {
+                    permission: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+        userPermissions: {
+          include: {
+            permission: true,
           },
         },
       },

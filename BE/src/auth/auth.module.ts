@@ -8,6 +8,8 @@ import { PassportModule } from '@nestjs/passport';
 import { RolesModule } from 'src/roles/roles.module';
 import { PermissionsModule } from 'src/permissions/permissions.module';
 import { PrismaModule } from 'src/prisma/prisma.module';
+import { JwtAccessGuard } from './guards/jwt-access.guard';
+import { PermissionGuard } from './guards/permission.guard';
 
 @Module({
   controllers: [AuthController],
@@ -19,8 +21,8 @@ import { PrismaModule } from 'src/prisma/prisma.module';
     PermissionsModule,
     PrismaModule,
   ],
-  providers: [AuthService, JwtAccessStrategy],
-  exports: [AuthService],
+  providers: [AuthService, JwtAccessStrategy, JwtAccessGuard, PermissionGuard],
+  exports: [AuthService, JwtAccessGuard, PermissionGuard],
 })
 export class AuthModule implements OnModuleInit {
   constructor(private readonly authService: AuthService) {}

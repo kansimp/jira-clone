@@ -28,7 +28,6 @@ export class RolesService {
       data: defaultRoles.map((role) => ({
         userId: id,
         roleId: role!.id,
-        grantedBy: 'system',
       })),
       skipDuplicates: true,
     });

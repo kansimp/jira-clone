@@ -4,13 +4,19 @@ import { GetUserDto } from 'src/users/dto/get-user.dto';
 import { UsersService } from 'src/users/users.service';
 import { RegisterReqDto } from './dto/register-req.dto';
 import { LoginCredential } from './dto/login-req.dto';
-import { IJwtPayload, LoginResDto } from './dto/login-res.dto';
+import {
+  IJwtPayload,
+  IRefreshTokenPayload,
+  LoginResDto,
+} from './dto/login-res.dto';
 import { JwtService } from '@nestjs/jwt';
 import { JwtConfigs } from 'src/common/configs/jwt.cfg';
 import { RolesService } from 'src/roles/roles.service';
 import { PermissionsService } from 'src/permissions/permissions.service';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { ResourceTypes } from 'src/common/enums/resource.enum';
+import { randomUUID } from 'crypto';
+import { Permission } from '@prisma/client';
 
 @Injectable()
 export class AuthService {
@@ -48,14 +54,17 @@ export class AuthService {
     const { password: _, ...safeUser } =
       await this.usersService.updateLastLogin(user.id, ip);
 
+    const jti = randomUUID();
     const accessToken = await this.generateAccessToken({
       email: safeUser.email,
       userId: safeUser.id,
+      roles: Array.from(await this.getUserRoles(safeUser.id)),
+      permissions: Array.from(await this.getUserPermissions(safeUser.id)),
+      jti,
     });
 
     const refreshToken = await this.generateRefreshToken({
-      email: safeUser.email,
-      userId: safeUser.id,
+      jti,
     });
 
     return {
@@ -65,6 +74,45 @@ export class AuthService {
       },
       user: safeUser as GetUserDto,
     };
+  }
+
+  async getUserPermissions(userId: string): Promise<Set<string>> {
+    const userWithPermissions =
+      await this.usersService.getUserWithPermissions(userId);
+
+    if (!userWithPermissions) {
+      return new Set<string>();
+    }
+
+    const permissions = new Set<string>();
+
+    userWithPermissions.userRoles.forEach((userRole) => {
+      userRole.role.rolePermissions.forEach((rolePermission) => {
+        permissions.add(this.getPermissionString(rolePermission.permission));
+      });
+    });
+
+    userWithPermissions.userPermissions.forEach((userPermission) => {
+      permissions.add(this.getPermissionString(userPermission.permission));
+    });
+
+    return permissions;
+  }
+
+  async getUserRoles(userId: string): Promise<Set<string>> {
+    const userWithRoles = await this.usersService.getUserWithRoles(userId);
+
+    if (!userWithRoles) {
+      return new Set<string>();
+    }
+
+    const roles = new Set<string>();
+
+    userWithRoles.userRoles.forEach((userRole) => {
+      roles.add(userRole.role.name);
+    });
+
+    return roles;
   }
 
   async initAuth() {
@@ -119,6 +167,10 @@ export class AuthService {
   //#endregion Public Methods
 
   //#region Private Methods
+  private getPermissionString(permission: Permission) {
+    return `${permission.action}:${permission.resource}`;
+  }
+
   private async validateUser(
     email: string,
     password: string,
@@ -144,7 +196,9 @@ export class AuthService {
     });
   }
 
-  private async generateRefreshToken(payload: IJwtPayload): Promise<string> {
+  private async generateRefreshToken(
+    payload: IRefreshTokenPayload,
+  ): Promise<string> {
     return this.jwtService.signAsync(payload, {
       secret: JwtConfigs.refreshSecret,
       expiresIn: JwtConfigs.refreshExpiresIn,

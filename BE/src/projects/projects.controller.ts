@@ -8,12 +8,17 @@ import {
   Delete,
   HttpStatus,
   HttpCode,
+  UseGuards,
 } from '@nestjs/common';
 import { ProjectsService } from './projects.service';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { ProjectEntity } from './entities/project.entity';
+import { JwtAccessGuard } from 'src/auth/guards/jwt-access.guard';
+import { PermissionGuard } from 'src/auth/guards/permission.guard';
+import { ApiBearerAuth } from '@nestjs/swagger';
+import { RequirePermissions } from 'src/auth/decorators/permission.decorator';
 
 @Controller('projects')
 export class ProjectsController {
@@ -22,6 +27,9 @@ export class ProjectsController {
     private readonly prisma: PrismaService,
   ) {}
 
+  @ApiBearerAuth()
+  @UseGuards(JwtAccessGuard, PermissionGuard)
+  @RequirePermissions('xx:project')
   @Post()
   @HttpCode(HttpStatus.CREATED)
   async create(@Body() createProjectDto: CreateProjectDto) {

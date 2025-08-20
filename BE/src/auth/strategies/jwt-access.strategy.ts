@@ -20,6 +20,12 @@ export class JwtAccessStrategy extends PassportStrategy(
     return {
       userId: payload.userId,
       email: payload.email,
+      jti: payload.jti,
+      permissions: payload.permissions,
+      roles: payload.roles,
     };
+  }
+  error(err: Error): void {
+    console.error('JWT Access Strategy Error:', err);
   }
 }
